@@ -1,5 +1,5 @@
-** Producer / Consumer 
-*** Producer
+* Producer / Consumer 
+** Producer
 
 #+BEGIN_SRC elixir
 defmodule Producer do
@@ -30,26 +30,26 @@ defmodule Producer do
   end
 end
 #+END_SRC
-**** [[https://hexdocs.pm/gen_stage/GenStage.html#c:init/1][~init/1~]]
-     - We are passed in the elements that the ~Producer~ can produce
-     - We return a tuple. The first element indicates it is a ~:producer~ and the second sets the ~state~ to our list of producible elements
-**** [[https://hexdocs.pm/gen_stage/GenStage.html#c:handle_demand/2][~handle_demand/2~]] 
-***** Function Arguments
-     This is the callback that a producer must implement. 
+*** [[https://hexdocs.pm/gen_stage/GenStage.html#c:init/1][~init/1~]]
+    - We are passed in the elements that the ~Producer~ can produce
+    - We return a tuple. The first element indicates it is a ~:producer~ and the second sets the ~state~ to our list of producible elements
+*** [[https://hexdocs.pm/gen_stage/GenStage.html#c:handle_demand/2][~handle_demand/2~]] 
+**** Function Arguments
+    This is the callback that a producer must implement. 
 
-     - ~demand~ - this is the number of elements that have been requested 
-     - ~state~ - the elements the ~Producer~ has available to produce
+    - ~demand~ - this is the number of elements that have been requested 
+    - ~state~ - the elements the ~Producer~ has available to produce
 
-***** Return
-      - ~{produced, leftover} = Enum.split(state, demand)~
-        - Here we create our list of events, ~produced~, to produce based in ~demand~ 
-        - ~leftover~ are the rest of our events, they will used to set our new state
-      - ~{:noreply, produced, leftover}~
-        - Follows the typespec of: ~{:noreply, [event], new_state}~
-          - Events must be returned as a ~List~
+**** Return
+     - ~{produced, leftover} = Enum.split(state, demand)~
+       - Here we create our list of events, ~produced~, to produce based in ~demand~ 
+       - ~leftover~ are the rest of our events, they will used to set our new state
+     - ~{:noreply, produced, leftover}~
+       - Follows the typespec of: ~{:noreply, [event], new_state}~
+         - Events must be returned as a ~List~
 
 
-*** Consumer  
+** Consumer  
 
 #+BEGIN_SRC elixir
 defmodule Consumer do
@@ -84,33 +84,33 @@ defmodule Consumer do
 end
 #+END_SRC
 
-**** [[https://hexdocs.pm/gen_stage/GenStage.html#c:init/1][~init/1~]]
-     - Our ~Consumer~ has no need to maintain state
-     - We return a tuple. The first element indicates it is a ~:consumer~. Since we have no need to track state, we are setting the state to ~:no_state~.
+*** [[https://hexdocs.pm/gen_stage/GenStage.html#c:init/1][~init/1~]]
+    - Our ~Consumer~ has no need to maintain state
+    - We return a tuple. The first element indicates it is a ~:consumer~. Since we have no need to track state, we are setting the state to ~:no_state~.
 
-**** [[https://hexdocs.pm/gen_stage/GenStage.html#c:handle_events/3][~handle_events/3]] 
+*** [[https://hexdocs.pm/gen_stage/GenStage.html#c:handle_events/3][~handle_events/3]] 
      
-     This is the callback that must be implemented by a ~Consumer~.
+    This is the callback that must be implemented by a ~Consumer~.
 
-***** Function Agruments 
+**** Function Agruments 
 
-      - ~events~ - a list of "things" that have been requested to consume
-      - ~from~ 
-        - The term that identifies a subscription associated with the corresponding producer/consumer, of the form ~{pid, subscription_tag}~
-        - In this example, we aren't worried about the ~_from~, so we prefix it with an ~_~ to indiciate it is uused.
-      - ~state~ - in this case we have set the state to ~:no_state~ in ~init~
+     - ~events~ - a list of "things" that have been requested to consume
+     - ~from~ 
+       - The term that identifies a subscription associated with the corresponding producer/consumer, of the form ~{pid, subscription_tag}~
+       - In this example, we aren't worried about the ~_from~, so we prefix it with an ~_~ to indiciate it is uused.
+     - ~state~ - in this case we have set the state to ~:no_state~ in ~init~
 
-***** Return
+**** Return
 
-      A ~Consumer~ is the final stage in the chain, so it does not return or emit any additional events. 
+     A ~Consumer~ is the final stage in the chain, so it does not return or emit any additional events. 
 
      
-******  Notes on our implementation 
+*****  Notes on our implementation 
 
-       - We are using ~:time.sleep(1000)~ to simulate "work" being done in the consumer
+      - We are using ~:time.sleep(1000)~ to simulate "work" being done in the consumer
 
 
-*** Bringing Them Together
+** Bringing Them Together
 
     #+BEGIN_SRC elixir
 defmodule BasicGenstage do
@@ -147,31 +147,31 @@ end
 defmodule Producer do
     #+END_SRC
 
-**** Generating Events to Produce
+*** Generating Events to Produce
 
-     We are creating a simple list of integers from 1 to 20 with ~(1..20) |> Enum.to_list()~. We use this list to initilaize our ~Producer~, ~{:ok, producer} = GenStage.start_link(Producer, things_to_process)~. 
+    We are creating a simple list of integers from 1 to 20 with ~(1..20) |> Enum.to_list()~. We use this list to initilaize our ~Producer~, ~{:ok, producer} = GenStage.start_link(Producer, things_to_process)~. 
 
-**** Creating a Consumer
+*** Creating a Consumer
 
-    - ~{:ok, consumer} = GenStage.start_link(Consumer, :no_state)~
-    - Sinc we do not care about ~state~, we initialize the ~Consumer~'s satte with the atom ~:no_state~
+   - ~{:ok, consumer} = GenStage.start_link(Consumer, :no_state)~
+   - Sinc we do not care about ~state~, we initialize the ~Consumer~'s satte with the atom ~:no_state~
 
-**** Syncing the Counsumer with the Producer 
+*** Syncing the Counsumer with the Producer 
 
  
-***** [[https://hexdocs.pm/gen_stage/GenStage.html#sync_subscribe/3][~GenStage.sync_subscribe/3~]]
+**** [[https://hexdocs.pm/gen_stage/GenStage.html#sync_subscribe/3][~GenStage.sync_subscribe/3~]]
 
-        - Used this to join the ~Producer~ and ~Consumer~
-        - ~GenStage.sync_subscribe(consumer, to: producer, max_demand: 4)~
+       - Used this to join the ~Producer~ and ~Consumer~
+       - ~GenStage.sync_subscribe(consumer, to: producer, max_demand: 4)~
 
-****** ~max_demand~
+***** ~max_demand~
 
-       - Defaults to ~1,000~
-       - Our example's ~Producer~ only has ~20~ elements, so we are setting ~max_demand~ to ~4~ so the ~Consumer~ will create demand from the ~Producer~ multiple times.
-       - The is the maximum number of events that will be requested; can request less (we'll see this in our example)
+      - Defaults to ~1,000~
+      - Our example's ~Producer~ only has ~20~ elements, so we are setting ~max_demand~ to ~4~ so the ~Consumer~ will create demand from the ~Producer~ multiple times.
+      - The is the maximum number of events that will be requested; can request less (we'll see this in our example)
 
 
-*** Sample Output
+** Sample Output
 
     #+BEGIN_SRC 
 BasicGenstage.go
