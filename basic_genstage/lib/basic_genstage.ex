@@ -50,7 +50,7 @@ defmodule Producer do
     # The events to emit is the second element of the tuple,
     # the third being the state.
     {produced, leftover} = Enum.split(state, demand)
-    IO.puts("Producer - Sending #{demand} items (#{inspect(produced)}). Have #{length(leftover)} left.")
+    IO.puts("Producer - Sending #{demand} items (#{inspect(produced, charlists: :as_lists)}) Have #{length(leftover)} left.")
 
     # must return a list
     {:noreply, produced, leftover}
@@ -81,7 +81,7 @@ defmodule Consumer do
     :timer.sleep(1000)
 
     # Print events to terminal.
-    IO.puts("Consumer - Received #{length(events)} events - #{inspect(events)}")
+    IO.puts("Consumer - Received #{length(events)} events - #{inspect(events, charlists: :as_lists)}")
 
     # We are a consumer, so we never emit events.
     {:noreply, [], state}

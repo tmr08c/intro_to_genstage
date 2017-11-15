@@ -174,38 +174,38 @@ defmodule Producer do
 ** Sample Output
 
     #+BEGIN_SRC 
-BasicGenstage.go
+iex(1)> BasicGenstage.go
 Producer - 4 of my 20 elements requested.
-Producer - Sending 4 items ([1, 2, 3, 4]). Have 16 left.
-{:ok, #Reference<0.464058803.4029153281.83455>}
+Producer - Sending 4 items ([1, 2, 3, 4]) Have 16 left.
 iex(2)> Consumer - Received 2 events - [1, 2]
 iex(2)> Producer - 2 of my 16 elements requested.
-iex(2)> Producer - Sending 2 items ([5, 6]). Have 14 left.
+iex(2)> Producer - Sending 2 items ([5, 6]) Have 14 left.
 iex(2)> Consumer - Received 2 events - [3, 4]
 iex(2)> Producer - 2 of my 14 elements requested.
-iex(2)> Producer - Sending 2 items ('\a\b'). Have 12 left.
+iex(2)> Producer - Sending 2 items ([7, 8]) Have 12 left.
 iex(2)> Consumer - Received 2 events - [5, 6]
 iex(2)> Producer - 2 of my 12 elements requested.
-iex(2)> Producer - Sending 2 items ('\t\n'). Have 10 left.
-iex(2)> Consumer - Received 2 events - '\a\b'
+iex(2)> Producer - Sending 2 items ([9, 10]) Have 10 left.
+iex(2)> Consumer - Received 2 events - [7, 8]
 iex(2)> Producer - 2 of my 10 elements requested.
-iex(2)> Producer - Sending 2 items ('\v\f'). Have 8 left.
-iex(2)> Consumer - Received 2 events - '\t\n'
+iex(2)> Producer - Sending 2 items ([11, 12]) Have 8 left.
+iex(2)> Consumer - Received 2 events - [9, 10]
 iex(2)> Producer - 2 of my 8 elements requested.
-iex(2)> Producer - Sending 2 items ([13, 14]). Have 6 left.
-iex(2)> Consumer - Received 2 events - '\v\f'
+iex(2)> Producer - Sending 2 items ([13, 14]) Have 6 left.
+iex(2)> Consumer - Received 2 events - [11, 12]
 iex(2)> Producer - 2 of my 6 elements requested.
-iex(2)> Producer - Sending 2 items ([15, 16]). Have 4 left.
+iex(2)> Producer - Sending 2 items ([15, 16]) Have 4 left.
 iex(2)> Consumer - Received 2 events - [13, 14]
 iex(2)> Producer - 2 of my 4 elements requested.
-iex(2)> Producer - Sending 2 items ([17, 18]). Have 2 left.
+iex(2)> Producer - Sending 2 items ([17, 18]) Have 2 left.
 iex(2)> Consumer - Received 2 events - [15, 16]
 iex(2)> Producer - 2 of my 2 elements requested.
-iex(2)> Producer - Sending 2 items ([19, 20]). Have 0 left.
+iex(2)> Producer - Sending 2 items ([19, 20]) Have 0 left.
 iex(2)> Consumer - Received 2 events - [17, 18]
 iex(2)> Producer - 2 of my 0 elements requested.
-iex(2)> Producer - Sending 2 items ([]). Have 0 left.
+iex(2)> Producer - Sending 2 items ([]) Have 0 left.
 iex(2)> Consumer - Received 2 events - [19, 20]
 iex(2)> Producer - 2 of my 0 elements requested.
-iex(2)> Producer - Sending 2 items ([]). Have 0 left.
+iex(2)> Producer - Sending 2 items ([]) Have 0 left.
+iex(2)> 
     #+END_SRC
