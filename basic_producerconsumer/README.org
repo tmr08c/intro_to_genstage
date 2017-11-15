@@ -3,7 +3,7 @@
 
    Our ~Producer~ and ~Consumer~ are much the same as before. 
 
-   See our previous example's section on [[*Producer][Producer]] and [[*Consumer][Consumer]] for more information about them.
+   See our previous example's section on [[https://github.com/tmr08c/intro_to_genstage/blob/master/basic_genstage/README.org#producer][Producer]] and [[https://github.com/tmr08c/intro_to_genstage/blob/master/basic_genstage/README.org#consumer][Consumer]] for more information about them.
 
 ** ProducerConsumer
 
