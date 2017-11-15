@@ -1,0 +1,211 @@
+** Producer / Consumer 
+*** Producer
+
+#+BEGIN_SRC elixir
+defmodule Producer do
+  @moduledoc """
+  A simple GenStage Producer stage.
+  """
+  use GenStage
+
+  def init(things_to_produce) do
+    {:producer, things_to_produce}
+  end
+
+  @doc """
+  `handle_demand` is the callback Producers must implement 
+
+  The first argument is the `demand`, the number of "things" the consumer is requesting; in this case, the number of elements from the list 
+  """
+  def handle_demand(demand, state)  do
+    IO.puts("Producer - #{demand} of my #{length(state)} elements requested.")
+
+    # The events to emit is the second element of the tuple,
+    # the third being the state.
+    {produced, leftover} = Enum.split(state, demand)
+    IO.puts("Producer - Sending #{demand} items (#{inspect(produced)}). Have #{length(leftover)} left.")
+
+    # must return a list
+    {:noreply, produced, leftover}
+  end
+end
+#+END_SRC
+**** [[https://hexdocs.pm/gen_stage/GenStage.html#c:init/1][~init/1~]]
+     - We are passed in the elements that the ~Producer~ can produce
+     - We return a tuple. The first element indicates it is a ~:producer~ and the second sets the ~state~ to our list of producible elements
+**** [[https://hexdocs.pm/gen_stage/GenStage.html#c:handle_demand/2][~handle_demand/2~]] 
+***** Function Arguments
+     This is the callback that a producer must implement. 
+
+     - ~demand~ - this is the number of elements that have been requested 
+     - ~state~ - the elements the ~Producer~ has available to produce
+
+***** Return
+      - ~{produced, leftover} = Enum.split(state, demand)~
+        - Here we create our list of events, ~produced~, to produce based in ~demand~ 
+        - ~leftover~ are the rest of our events, they will used to set our new state
+      - ~{:noreply, produced, leftover}~
+        - Follows the typespec of: ~{:noreply, [event], new_state}~
+          - Events must be returned as a ~List~
+
+
+*** Consumer  
+
+#+BEGIN_SRC elixir
+defmodule Consumer do
+  @moduledoc """
+  A simple GenStage Producer stage.
+  """
+  use GenStage
+
+  def init(_) do
+    {:consumer, :no_state}
+  end
+
+  @doc """
+  `handle_events` is the callback Consumers must implement 
+
+  Arguments:
+
+  - `events` - a list of "things" that have been requested to consume
+  - `from` - the producer(?)
+  - `state` - in this case we have set the state to `:no_state` in `init`
+  """
+  def handle_events(events, _from, state) do
+    # Sleep so it looks like we are doing more things 
+    :timer.sleep(1000)
+
+    # Print events to terminal.
+    IO.puts("Consumer - Received #{length(events)} events - #{inspect(events)}")
+
+    # We are a consumer, so we never emit events.
+    {:noreply, [], state}
+  end
+end
+#+END_SRC
+
+**** [[https://hexdocs.pm/gen_stage/GenStage.html#c:init/1][~init/1~]]
+     - Our ~Consumer~ has no need to maintain state
+     - We return a tuple. The first element indicates it is a ~:consumer~. Since we have no need to track state, we are setting the state to ~:no_state~.
+
+**** [[https://hexdocs.pm/gen_stage/GenStage.html#c:handle_events/3][~handle_events/3]] 
+     
+     This is the callback that must be implemented by a ~Consumer~.
+
+***** Function Agruments 
+
+      - ~events~ - a list of "things" that have been requested to consume
+      - ~from~ 
+        - The term that identifies a subscription associated with the corresponding producer/consumer, of the form ~{pid, subscription_tag}~
+        - In this example, we aren't worried about the ~_from~, so we prefix it with an ~_~ to indiciate it is uused.
+      - ~state~ - in this case we have set the state to ~:no_state~ in ~init~
+
+***** Return
+
+      A ~Consumer~ is the final stage in the chain, so it does not return or emit any additional events. 
+
+     
+******  Notes on our implementation 
+
+       - We are using ~:time.sleep(1000)~ to simulate "work" being done in the consumer
+
+
+*** Bringing Them Together
+
+    #+BEGIN_SRC elixir
+defmodule BasicGenstage do
+  @moduledoc """
+  Basic example of using a single Producer and single Consumer 
+  with GenStage.
+  """
+
+  @doc """
+  Start a basic Producer-Consumer example of GenStage.
+
+  We create one producer and initialize its state with a list of 20
+  and one consumer.
+  
+
+  ## Examples
+
+      iex> BasicGenstage.go
+
+  """
+  def go do
+    things_to_process =
+      (1..20)
+      |> Enum.to_list()
+
+    {:ok, producer} = GenStage.start_link(Producer, things_to_process)
+    {:ok, consumer} = GenStage.start_link(Consumer, :no_state)
+
+    # Here we tell `consumer` to subscribe to request elements from `producer`
+    GenStage.sync_subscribe(consumer, to: producer, max_demand: 4)
+  end
+end
+
+defmodule Producer do
+    #+END_SRC
+
+**** Generating Events to Produce
+
+     We are creating a simple list of integers from 1 to 20 with ~(1..20) |> Enum.to_list()~. We use this list to initilaize our ~Producer~, ~{:ok, producer} = GenStage.start_link(Producer, things_to_process)~. 
+
+**** Creating a Consumer
+
+    - ~{:ok, consumer} = GenStage.start_link(Consumer, :no_state)~
+    - Sinc we do not care about ~state~, we initialize the ~Consumer~'s satte with the atom ~:no_state~
+
+**** Syncing the Counsumer with the Producer 
+
+ 
+***** [[https://hexdocs.pm/gen_stage/GenStage.html#sync_subscribe/3][~GenStage.sync_subscribe/3~]]
+
+        - Used this to join the ~Producer~ and ~Consumer~
+        - ~GenStage.sync_subscribe(consumer, to: producer, max_demand: 4)~
+
+****** ~max_demand~
+
+       - Defaults to ~1,000~
+       - Our example's ~Producer~ only has ~20~ elements, so we are setting ~max_demand~ to ~4~ so the ~Consumer~ will create demand from the ~Producer~ multiple times.
+       - The is the maximum number of events that will be requested; can request less (we'll see this in our example)
+
+
+*** Sample Output
+
+    #+BEGIN_SRC 
+BasicGenstage.go
+Producer - 4 of my 20 elements requested.
+Producer - Sending 4 items ([1, 2, 3, 4]). Have 16 left.
+{:ok, #Reference<0.464058803.4029153281.83455>}
+iex(2)> Consumer - Received 2 events - [1, 2]
+iex(2)> Producer - 2 of my 16 elements requested.
+iex(2)> Producer - Sending 2 items ([5, 6]). Have 14 left.
+iex(2)> Consumer - Received 2 events - [3, 4]
+iex(2)> Producer - 2 of my 14 elements requested.
+iex(2)> Producer - Sending 2 items ('\a\b'). Have 12 left.
+iex(2)> Consumer - Received 2 events - [5, 6]
+iex(2)> Producer - 2 of my 12 elements requested.
+iex(2)> Producer - Sending 2 items ('\t\n'). Have 10 left.
+iex(2)> Consumer - Received 2 events - '\a\b'
+iex(2)> Producer - 2 of my 10 elements requested.
+iex(2)> Producer - Sending 2 items ('\v\f'). Have 8 left.
+iex(2)> Consumer - Received 2 events - '\t\n'
+iex(2)> Producer - 2 of my 8 elements requested.
+iex(2)> Producer - Sending 2 items ([13, 14]). Have 6 left.
+iex(2)> Consumer - Received 2 events - '\v\f'
+iex(2)> Producer - 2 of my 6 elements requested.
+iex(2)> Producer - Sending 2 items ([15, 16]). Have 4 left.
+iex(2)> Consumer - Received 2 events - [13, 14]
+iex(2)> Producer - 2 of my 4 elements requested.
+iex(2)> Producer - Sending 2 items ([17, 18]). Have 2 left.
+iex(2)> Consumer - Received 2 events - [15, 16]
+iex(2)> Producer - 2 of my 2 elements requested.
+iex(2)> Producer - Sending 2 items ([19, 20]). Have 0 left.
+iex(2)> Consumer - Received 2 events - [17, 18]
+iex(2)> Producer - 2 of my 0 elements requested.
+iex(2)> Producer - Sending 2 items ([]). Have 0 left.
+iex(2)> Consumer - Received 2 events - [19, 20]
+iex(2)> Producer - 2 of my 0 elements requested.
+iex(2)> Producer - Sending 2 items ([]). Have 0 left.
+    #+END_SRC
